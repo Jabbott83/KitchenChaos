@@ -5,8 +5,44 @@ using UnityEngine;
 
 public class StoveCounter : BaseCounter {
 
+    private enum State {
+        Idle,
+        Frying,
+        Fried,
+        Burned,
+    }
     [SerializeField] private FryingRecipeSO[] FryingRecipeSOArray;
 
+    private State state;
+
+    private float fryingTimer;
+    private FryingRecipeSO fryingRecipeSO;
+
+    private void Start() {
+        state = State.Idle;
+    }
+    private void Update() {
+        if (HasKitchenObject()) {
+            switch (state) {
+            case State.Idle:
+                break;
+            case State.Frying:                
+                fryingTimer += Time.deltaTime;
+                if (fryingTimer > fryingRecipeSO.fryingTimerMax) {
+                    //Fried
+                    fryingTimer = 0f;
+                    GetKitchenObject().DestroySelf();
+
+                    KitchenObject.SpawnKitchenObject(fryingRecipeSO.output, this);
+                }
+                break;
+            case State.Fried:
+                break;
+            case State.Burned:
+                break;
+            }
+            }
+    }
 
     public override void Interact(Player player) {
         if (!HasKitchenObject()) {
@@ -16,6 +52,9 @@ public class StoveCounter : BaseCounter {
                 if (HasRecipeWithInput(player.GetKitchenObject().GetKitchenObjectSO())) {
                     //Player carrying something that can be fried
                     player.GetKitchenObject().SetKitchenObjectParent(this);
+
+                    fryingRecipeSO = GetFryingRecipeSOWithInput(GetKitchenObject().GetKitchenObjectSO());
+
                 }                
             } else {
                 //Player not carrying anything
